@@ -1,7 +1,7 @@
 import os
 from telegram import Update
 from telegram.ext import ContextTypes
-from utils import transcribe, chop_audio, extract_audio_from_video, streaming_transcribe
+from utils import transcribe, chop_audio, extract_audio_from_video, streaming_transcribe, get_file
 from pydub import AudioSegment
 from uuid import uuid4
 
@@ -11,25 +11,14 @@ async def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     audio = update.message.audio
     if audio:
         file_id = update.message.audio.file_id
-        file_size = update.message.audio.file_size
     else:
         file_id = update.message.voice.file_id
-        file_size = update.message.voice.file_size
 
-    if file_size < 24 * 1024 * 1024:
+    file = await context.bot.getFile(file_id)
 
-        file = await context.bot.getFile(file_id)
+    audio = AudioSegment.from_file(file.file_path)
 
-        filename = f'./file/{uuid4()}.mp3'
-        await file.download_to_drive(filename)
-
-        audio = AudioSegment.from_file(filename)
-        os.remove(filename)
-
-        await streaming_transcribe(audio, update)
-
-    else:
-        await update.effective_message.reply_text('file is too big')
+    await streaming_transcribe(audio, update)
 
 
 async def video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -39,17 +28,13 @@ async def video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if video_note:
         file_id = video_note.file_id
     else:
-        file_id = update.message.video
-    # получаем видео
-    file = await context.bot.getFile(file_id, read_timeout=30)
-    # сохраняем видео
-    video_name = f'./file/{uuid4()}.mp4'
-    await file.download_to_drive(video_name)
-    # вытаскиваем аудио из видео
-    audio = extract_audio_from_video(video_name)
-    os.remove(video_name)
+        file_id = update.message.video.file_id
 
-    audio_name = f'./file/{uuid4()}.mp3'
+    file = await context.bot.getFile(file_id, read_timeout=30)
+
+    audio = extract_audio_from_video(file.file_path)
+
+    audio_name = f'/app/bot/file/{uuid4()}.mp3'
     audio.write_audiofile(audio_name)
 
     audio = AudioSegment.from_file(audio_name)

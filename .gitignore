@@ -3,3 +3,5 @@ bot/usage_logs
 venv
 bot/.env
 bot/__pycache__
+.idea
+usage_logs

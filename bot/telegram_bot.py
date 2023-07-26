@@ -744,10 +744,10 @@ class ChatGPTTelegramBot:
         """
         application = ApplicationBuilder() \
             .token(self.config['token']) \
-            .proxy_url(self.config['proxy']) \
-            .get_updates_proxy_url(self.config['proxy']) \
-            .post_init(self.post_init) \
-            .concurrent_updates(True) \
+            .base_url('http://telegram-bot-api:8081/bot')\
+            .base_file_url('http://telegram-bot-api:8081/bot/file')\
+            .read_timeout(30)\
+            .write_timeout(30)\
             .build()
 
         application.add_handler(CommandHandler('reset', self.reset))

@@ -1,14 +1,19 @@
-FROM python:3.9-alpine
+FROM python:3.9-slim-buster
 
-ENV PYTHONFAULTHANDLER=1 \
-     PYTHONUNBUFFERED=1 \
-     PYTHONDONTWRITEBYTECODE=1 \
-     PIP_DISABLE_PIP_VERSION_CHECK=on
-
-RUN apk --no-cache add ffmpeg
 
 WORKDIR /app
-COPY . .
-RUN pip install -r requirements.txt --no-cache-dir
+
+# Copy requirements file
+COPY requirements.txt app/requirements.txt
+
+# Install dependencies
+RUN pip install --no-cache-dir -r app/requirements.txt
+RUN apt-get update && apt-get -y install ffmpeg libavcodec-extra
+
+COPY . /app/
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 CMD ["python", "bot/main.py"]

@@ -335,7 +335,7 @@ async def transcribe(file_buffer):
 
 async def streaming_transcribe(audio: AudioSegment, update: Update):
     for chunk in chop_audio(audio, 120):
-        chunk_name = f'./file/{uuid4()}.mp3'
+        chunk_name = f'/app/bot/file/{uuid4()}.mp3'
         chunk.export(chunk_name, format='mp3')
         with open(chunk_name, 'rb') as f:
             t = await transcribe(f)
@@ -361,3 +361,8 @@ def chop_audio(audio: AudioSegment, chunk_duration: int) -> Generator:
 
         start_time = end_time
         end_time += chunk_duration * 1000
+
+
+async def get_file(file_id):
+    async with AsyncClient(timeout=None) as client:
+        return await client.get(f'http://0.0.0.0:8081/bot{settings.TELEGRAM_KEY}/getFile?file_id={file_id}')
