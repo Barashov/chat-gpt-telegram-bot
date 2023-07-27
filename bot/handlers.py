@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes
 from utils import transcribe, chop_audio, extract_audio_from_video, streaming_transcribe, get_file
 from pydub import AudioSegment
 from uuid import uuid4
+from kb import rate_dialog_kb
 
 
 async def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -18,7 +19,8 @@ async def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     audio = AudioSegment.from_file(file.file_path)
 
-    await streaming_transcribe(audio, update)
+    last_message = await streaming_transcribe(audio, update, context)
+    await last_message.edit_reply_markup(rate_dialog_kb())
 
 
 async def video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -40,5 +42,6 @@ async def video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     audio = AudioSegment.from_file(audio_name)
     os.remove(audio_name)
 
-    await streaming_transcribe(audio, update)
+    last_message = await streaming_transcribe(audio, update, context)
+    await last_message.edit_reply_markup(rate_dialog_kb())
 

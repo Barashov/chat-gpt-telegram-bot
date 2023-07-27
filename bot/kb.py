@@ -1,9 +1,9 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-def rate_dialog_kb(message_id):
+def rate_dialog_kb():
     keyboard = [
-        [InlineKeyboardButton(text='оценить', callback_data='rate_dialog_')]
+        [InlineKeyboardButton(text='оценить', callback_data='rate_dialog')]
     ]
     return InlineKeyboardMarkup(keyboard)
 

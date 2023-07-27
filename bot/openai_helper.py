@@ -4,14 +4,14 @@ import logging
 import os
 
 import tiktoken
-
+import asyncio
 import openai
-
+from telegram import Message
 import requests
 import json
 from datetime import date
 from calendar import monthrange
-
+import settings
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
 # Models can be found here: https://platform.openai.com/docs/models/overview
@@ -21,7 +21,7 @@ GPT_4_MODELS = ("gpt-4", "gpt-4-0314", "gpt-4-0613")
 GPT_4_32K_MODELS = ("gpt-4-32k", "gpt-4-32k-0314", "gpt-4-32k-0613")
 GPT_ALL_MODELS = GPT_3_MODELS + GPT_3_16K_MODELS + GPT_4_MODELS + GPT_4_32K_MODELS
 
-
+openai.api_key = settings.OPENAI_API_KEY
 def default_max_tokens(model: str) -> int:
     """
     Gets the default number of max tokens for the given model.
@@ -356,3 +356,37 @@ class OpenAIHelper:
         billing_data = json.loads(response.text)
         usage_month = billing_data["total_usage"] / 100  # convert cent amount to dollars
         return usage_month
+
+
+async def get_chat_response(text=None, messages=None, **kwargs):
+    if text is not None:
+        messages = [{"role": "user", "content": text}]
+    return await openai.ChatCompletion.acreate(messages=messages, **kwargs)
+
+
+async def send_message_stream(text: str):
+    response = await get_chat_response(text=text, model='gpt-4', stream=True)
+    answer = ""
+    async for chunk in response:
+        delta = chunk.choices[0].delta
+        if "content" in delta:
+            answer += delta.content
+            if f'\n' in delta.content:
+                yield "not_finished", answer
+        answer = answer
+
+
+async def handle_message(text, message):
+    gen = send_message_stream(text)
+    message_text = None
+    async for gen_item in gen:
+        status, answer = gen_item
+        answer = answer[:4096]
+
+        if message_text != answer and answer != '':
+            message_text = answer
+            await message.edit_text(answer)
+
+
+
+

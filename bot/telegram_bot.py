@@ -3,15 +3,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-
+import settings
 from uuid import uuid4
+from telegram.ext import ConversationHandler
 from telegram import BotCommandScopeAllGroupChats, Update, constants
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle
 from telegram import InputTextMessageContent, BotCommand
 from telegram.error import RetryAfter, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, \
     filters, InlineQueryHandler, CallbackQueryHandler, Application, ContextTypes, CallbackContext
-
+from questions import asking_client, asking_seller
 from pydub import AudioSegment
 
 from utils import is_group_chat, get_thread_id, message_text, wrap_with_indicator, split_into_chunks, \
@@ -759,7 +760,15 @@ class ChatGPTTelegramBot:
         application.add_handler(CommandHandler(
             'chat', self.prompt, filters=filters.ChatType.GROUP | filters.ChatType.SUPERGROUP)
         )
-        application.add_handler(CallbackQueryHandler(callback_rate_dialog, pattern='rate_dialog_'))
+        conv_handler = ConversationHandler(
+            per_user=True,
+            entry_points=[CallbackQueryHandler(callback_rate_dialog, pattern='rate_dialog')],
+            states={
+                settings.ASKING_SELLER: [MessageHandler(filters.TEXT, asking_seller)],
+                settings.ASKING_CLIENT: [MessageHandler(filters.TEXT, asking_client)]
+            },
+            fallbacks=[])
+        application.add_handler(conv_handler)
         application.add_handler(CallbackQueryHandler(look_transcribe_callback, pattern='look_transcribe'))
         application.add_handler(MessageHandler(filters.AUDIO | filters.VOICE, audio_handler))
         application.add_handler(MessageHandler(filters.VIDEO | filters.VIDEO_NOTE, video_handler))
