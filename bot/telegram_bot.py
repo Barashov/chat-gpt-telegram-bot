@@ -745,7 +745,9 @@ class ChatGPTTelegramBot:
         application = ApplicationBuilder() \
             .token(self.config['token']) \
             .base_url('http://telegram-bot-api:8081/bot')\
-            .base_file_url('http://telegram-bot-api:8081/bot/file').build()
+            .base_file_url('http://telegram-bot-api:8081/bot/file')\
+            .read_timeout(None)\
+            .write_timeout(None).build()
 
         application.add_handler(CommandHandler('reset', self.reset))
         application.add_handler(CommandHandler('help', self.help))
