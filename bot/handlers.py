@@ -15,7 +15,7 @@ async def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         file_id = update.message.voice.file_id
 
-    file = await context.bot.getFile(file_id)
+    file = await context.bot.getFile(file_id, read_timeout=None, write_timeout=None)
 
     audio = AudioSegment.from_file(file.file_path)
 
@@ -32,7 +32,7 @@ async def video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         file_id = update.message.video.file_id
 
-    file = await context.bot.getFile(file_id, read_timeout=30)
+    file = await context.bot.getFile(file_id, read_timeout=None, write_timeout=None)
 
     audio = extract_audio_from_video(file.file_path)
 

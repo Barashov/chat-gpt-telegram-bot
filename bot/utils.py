@@ -333,19 +333,31 @@ async def transcribe(file_buffer):
         return response.json()
 
 
+
 async def streaming_transcribe(audio: AudioSegment, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = ''
+    
+    full_text = ''
     context.user_data['audio_text'] = ''
+    text = ''
+    message = None
+
     for chunk in chop_audio(audio, 120):
         chunk_name = f'/app/bot/file/{uuid4()}.mp3'
         chunk.export(chunk_name, format='mp3')
         with open(chunk_name, 'rb') as f:
             t = await transcribe(f)
             os.remove(chunk_name)
-        message = await update.effective_message.reply_text(t)
-        text += t
-    context.user_data['audio_text'] = text
 
+        full_text += t
+        
+        if len(text + t) < 4096:
+            message = await stream_text(text=t, last_text=text, update=update, message=message)
+            text += t
+        else:
+            message = await stream_text(text=t, update=update)
+            text = ''
+
+    context.user_data['audio_text'] = full_text
     return message
 
 
@@ -373,4 +385,25 @@ async def get_file(file_id):
     async with AsyncClient(timeout=None) as client:
         return await client.get(f'http://0.0.0.0:8081/bot{settings.TELEGRAM_KEY}/getFile?file_id={file_id}')
 
+
+async def stream_text(text,
+                      last_text='',
+                      message: Message = None,
+                      update: Update = None):
+    """
+    отправляет пользователю текст стримингом.
+    """
+    words = text.split(' ')
+    i = 0
+    for chunk in words:
+        last_text += ' ' + chunk
+        i += 1
+        if i == 15:
+            await asyncio.sleep(1.2)
+            i = 0
+            if message is not None:
+                await message.edit_text(last_text)
+            else:
+                message = await update.effective_message.reply_text(last_text)
+    return message
 

@@ -5,4 +5,4 @@ bot/.env
 bot/__pycache__
 .idea
 usage_logs
-file
+bot/file/*
