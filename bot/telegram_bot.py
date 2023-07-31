@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-
+from prompt import system_message
+from utils import get_data
 from uuid import uuid4
 from telegram import BotCommandScopeAllGroupChats, Update, constants
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle
@@ -20,8 +21,7 @@ from utils import is_group_chat, get_thread_id, message_text, wrap_with_indicato
 from openai_helper import OpenAIHelper, localized_text
 from usage_tracker import UsageTracker
 from kb import rate_dialog_kb
-from callback import callback_rate_dialog, look_transcribe_callback
-from handlers import audio_handler, video_handler
+from handlers import audio_handler, video_handler, text_handler
 
 
 class ChatGPTTelegramBot:
@@ -54,23 +54,22 @@ class ChatGPTTelegramBot:
         self.last_message = {}
         self.inline_queries_cache = {}
 
-    async def help(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Shows the help menu.
         """
-        commands = self.group_commands if is_group_chat(update) else self.commands
-        commands_description = [f'/{command.command} - {command.description}' for command in commands]
-        bot_language = self.config['bot_language']
-        help_text = (
-                localized_text('help_text', bot_language)[0] +
-                '\n\n' +
-                '\n'.join(commands_description) +
-                '\n\n' +
-                localized_text('help_text', bot_language)[1] +
-                '\n\n' +
-                localized_text('help_text', bot_language)[2]
-        )
-        await update.message.reply_text(help_text, disable_web_page_preview=True)
+        messages = context.user_data.get('messages')
+        if messages is None:
+            messages = [{'role': 'system',
+                         'content': system_message},
+                        {'role': 'system',
+                         'content': f'в магазине есть эти товары: {get_data()}'}]
+
+        help_text = 'Добро пожаловать в магазин "Леонардо"! У нас есть следующие категории товаров: "Пряжа для вязания", "Спицы для вязания", "Крючки для вязания" и "Книги про вязание". В каждой категории есть различные товары, которые я могу вам показать и рассказать подробнее о них. Что вас интересует?'
+        messages.append({'role': 'assistant',
+                         'content': help_text})
+        context.user_data['messages'] = messages
+        await update.message.reply_text(help_text)
 
     async def stats(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -743,9 +742,7 @@ class ChatGPTTelegramBot:
         Runs the bot indefinitely until the user presses Ctrl+C
         """
         application = ApplicationBuilder() \
-            .token(self.config['token']) \
-            .base_url('http://telegram-bot-api:8081/bot')\
-            .base_file_url('http://telegram-bot-api:8081/bot/file')\
+            .token(self.config['token'])\
             .read_timeout(None)\
             .write_timeout(None).build()
 
@@ -758,11 +755,7 @@ class ChatGPTTelegramBot:
         application.add_handler(CommandHandler(
             'chat', self.prompt, filters=filters.ChatType.GROUP | filters.ChatType.SUPERGROUP)
         )
-        application.add_handler(CallbackQueryHandler(callback_rate_dialog, pattern='rate_dialog_'))
-        application.add_handler(CallbackQueryHandler(look_transcribe_callback, pattern='look_transcribe'))
-        application.add_handler(MessageHandler(filters.AUDIO | filters.VOICE, audio_handler))
-        application.add_handler(MessageHandler(filters.VIDEO | filters.VIDEO_NOTE, video_handler))
-        application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.prompt))
+        application.add_handler(MessageHandler(filters.TEXT, text_handler))
         application.add_handler(InlineQueryHandler(self.inline_query, chat_types=[
             constants.ChatType.GROUP, constants.ChatType.SUPERGROUP, constants.ChatType.PRIVATE
         ]))

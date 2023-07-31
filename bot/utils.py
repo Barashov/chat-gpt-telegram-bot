@@ -6,14 +6,14 @@ import itertools
 import logging
 from uuid import uuid4
 from httpx import AsyncClient
-
+import openai
 from moviepy.editor import VideoFileClip, AudioFileClip
 from pydub import AudioSegment
 
 import telegram
 from telegram import Message, MessageEntity, Update, ChatMember, constants
 from telegram.ext import CallbackContext, ContextTypes
-
+from tiktoken import encoding_for_model
 from usage_tracker import UsageTracker
 import settings
 
@@ -399,3 +399,68 @@ async def stream_text(text,
             else:
                 message = await update.effective_message.reply_text(last_text)
     return message
+
+
+def num_tokens_from_messages(messages):
+    encoding = encoding_for_model(settings.MODEL)
+    num_tokens = 0
+    for message in messages:
+        num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(value))
+            if key == "name":  # if there's a name, the role is omitted
+                num_tokens += -1  # role is always required and always 1 token
+    num_tokens += 2  # every reply is primed with <im_start>assistant
+    return num_tokens
+
+
+async def get_chat_response(messages, stream=False):
+    return await openai.ChatCompletion.acreate(
+        timeout=None,
+        messages=messages,
+        model=settings.MODEL,
+        stream=stream,
+        temperature=settings.TEMPERATURE
+    )
+
+
+def get_data():
+    with open('products.json', 'r') as file:
+        return file.read()
+
+
+async def stream_response(messages, update: Update, message=None):
+    response = await get_chat_response(messages, stream=True)
+    full_text = ''
+    text = ''
+    i = 0
+    async for chunk in response:
+        chunk_text = chunk["choices"][0].get("delta").get("content")
+        i += 1
+        if chunk_text is not None:
+            full_text += chunk_text
+
+            if i == 45:
+                await asyncio.sleep(0.5)
+                # если перенос строки, то отпавляем сообщение
+                i = 0
+                text += chunk_text
+                if message is None:
+                    # если объект message не передали, то создаем новое сообщение
+                    message = await update.effective_message.reply_text(text)
+                    continue
+                if len(text) < 4000:
+                    # если длинна сообщения меньше максимального, то меняем
+                    await message.edit_text(text)
+                    continue
+
+                else:
+                    # если сообщение больше допущенного, то создаем новое сообщение и обновляем text
+                    text = chunk_text
+                    message = await update.effective_message.reply_text(chunk_text)
+                    continue
+            text += chunk_text
+    else:
+        # в конце отправляем весь текст, если пробела не было
+        await message.edit_text(text)
+        return full_text

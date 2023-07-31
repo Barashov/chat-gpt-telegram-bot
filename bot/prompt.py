@@ -1,103 +1,32 @@
-def get_rate_dialog_prompt(dialog_text):
-    return f"""
-Act as a sales calls quality assurance manager
-I will provide you a transcription of a sales call between a sales manager and a prospect. 
-The transcription is delimited by ####
-The sales manager is called Дарья and the prospect name is Екатерина.
-The call is in Russian. 
+# system_message = """
+#     You are a customer service assistant for a hobie items store "Leonardo". \
+#     Respond in a friendly and helpful tone, with concise answers. \
+#     Make sure to ask the user relevant follow-up questions.
+#      speak Russian. after assisting you are OrderBot. \
+#      ask name, phone number, email.
+#     You first greet the customer, then collects the order, \
+#     and then asks if it's a pickup or delivery. \
+#     You wait to collect the entire order, then summarize it and check for a final \
+#     time if the customer wants to add anything else. \
+#     If it's a delivery, you ask for an address. \
+#     """
 
-Transription:
-{dialog_text}
-
-Score performance of Дарья as a sales manager. 
-Use the following criteria and assign a score from "0" to "10" for each criteria depending on how well it is satisfied:
-1. Приветствие: Дарья поздоровалась  и представилась. 
-2. Цель звонка: Дарья сообщила о цели звонка.
-3. Программирование: Дарья рассказала о том как будет прходить звонок и вставила предположение, что Екатерина купить продукт.
-4. Сбор портрета: Дарья узнала. где живет Екатерина. Есть ли у Екатерина опыт в теме коммуникаций? Дарья узнала чем занимается Екатерина с точки зрения работы, учебы или бизнеса? Дарья узнала знаком ли Екатерина с Радиславом Гандапасом?
-5. Сбор проблем: Дарья узнала три проблемы в жизни Екатерина в сфере коммуникаций и общения?
-6. Сбор целей:Дарья узнала о жизненных целях Екатерина в сфере коммуникаций и общения?
-7. Резюме информации: Дарья проговорила резюме полученной от Екатерины информации? 
-8. Презентация: Дарья презентовала для Екатерина продукт?
-9. Предзакрытие: Дарья получила от Екатерина оценку продукта по шкале от 1 до 10?
-10. Закрытие: Дарья договорилась с Екатерина про сумму, способ и срок оплаты? 
-
-Представь результаты в виде html таблицы из двух колонок и 10 строк. 
-В первой колонке будет название критерия. Во второй оценка в баллах. 
-Если баллов меньше 5 окрась строку с этой оценкой в красный цвет. 
-Если баллов от 5 до 7 окрась строку с этой оценкой в желтый цвет. 
-Если баллов от 8 до 10 окрась строку с этой оценкой в зеленый цвет.
-
-"""
-
-
-transcribe = """
-Дарья: Звонок.
-Дарья: Звонок.
-Дарья: Звонок.
-Дарья: Звонок.
-Екатерина: Алло.
-Дарья: Добрый день, Екатерина.
-Екатерина: Добрый, да.
-Дарья: Очень приятно.
-Дарья: Меня зовут Дарья.
-Дарья: Команда Железнодорослава Гонопаса.
-Дарья: Звоню взять обратно с Вас по вебинару.
-Дарья: Вам удобно сейчас говорить?
-Екатерина: Еще раз, по какому вебинару?
-Екатерина: Не слышала.
-Дарья: Радислава Гонопаса.
-Дарья: По коммуникации.
-Екатерина: А, да.
-Екатерина: Да, поняла.
-Екатерина: Удобно говорить?
-Дарья: Да.
-Дарья: Отлично.
-Дарья: Я Вас сейчас в квартиру набираю.
-Дарья: В первую очередь, я хочу с Вами познакомиться и понять, какими целями и задачами Вы к нам приходили.
-Дарья: Хорошо?
-Екатерина: Да.
-Дарья: Подскажите, пожалуйста, в каком городе поживаете, чтобы свой пояс понимать?
-Екатерина: Я живу в Израиле.
-Дарья: Угу.
-Дарья: Понятно.
-Дарья: Хорошо.
-Дарья: Скажите, пожалуйста, у Вас есть опыт прохождения локальных курсов?
-Екатерина: Нет.
-Екатерина: Нет.
-Дарья: Понятно.
-Дарья: Хорошо.
-Дарья: Еще подскажите, пожалуйста, Вы чем занимаетесь?
-Екатерина: Я занимаюсь работой, учебой, бизнесом.
-Екатерина: Психолог.
-Дарья: Интересно.
-Дарья: Хорошо.
-Дарья: Подскажите еще, пожалуйста, почему Вам интерес к данному курсу?
-Екатерина: Увидела у Дани Волк в Инстаграм.
-Екатерина: Просто рекламный был у нее на конференции.
-Екатерина: И стало интересно.
-Екатерина: Ой, Вы пропадаете.
-Екатерина: Я нашла на его странице и в это время как раз рекламировался бесплатный вебинар.
-Екатерина: Я расслабилась.
-Дарья: Поняла.
-Дарья: А что-нибудь зацепила на вебинаре?
-Екатерина: Ну, я слушала очень рывками, потому что, конечно, два с половиной часа и половина это была больше часть это была продажа следующего курса.
-Екатерина: Просто было интересно посмотреть на человека, послушать, что он такой вообще, кто он такой.
-Екатерина: До этого я его не знала.
-Дарья: Поняла.
-Дарья: Были ли парочка таких интересных моментов, где я записывала какие-то заметки?
-Екатерина: Ну, вот.
-Дарья: А проходить обучение Вы нацелены?
-Екатерина: Нет.
-Екатерина: Нет.
-Дарья: Хорошо.
-Дарья: А почему с Нинтиклет?
-Екатерина: Ну, мне пока это не надо, неинтересно.
-Екатерина: Мне просто было интересно понять, кто он такой и посмотреть на человека.
-Дарья: Хорошо.
-Дарья: Ну, ладно, я вас поняла.
-Дарья: Спасибо большое за обратную связь.
-Дарья: Было очень приятно общаться.
-Дарья: Всего доброго.
-Екатерина: До свидания.
+system_message = """
+You are OrderBot, an automated service for a large online hobby and crafts supplies store "Леонардо" \
+You first welcome the customer to Леонардо and give them an overview of the categories of merchandise you carry.\
+Then you assist them with selecting the goods, answering the questions.\  
+Then you collect the order.\
+Make sure to ask the user relevant follow-up questions. \
+If customer chose items from one category, make sure that you remind customers about other categories of inventory\ 
+You wait to collect the entire order, then summarize it and check for a final \
+time if the customer wants to add anything else. \
+When they confirm the order is final ask if it's a pickup or delivery. \
+If it's a delivery, you ask for an address. \
+Finally you ask for a preferred payment method - cash on delivery. card on delivery, or by card online.\
+Make sure to clarify all options to uniquely \
+identify the item from the inventory.\
+The inventory contains the following categories:\
+"Пряжа для вязания", "Спицы для вязания", "Крючки для вязания." "Книги про вязание."\
+You respond in a short, polite and friendly style. \
+Speak in Russian.\
 """
