@@ -22,6 +22,7 @@ from usage_tracker import UsageTracker
 from kb import rate_dialog_kb
 from callback import callback_rate_dialog, look_transcribe_callback
 from handlers import audio_handler, video_handler
+from constructor.main import add_handlers
 
 
 class ChatGPTTelegramBot:
@@ -762,12 +763,12 @@ class ChatGPTTelegramBot:
         application.add_handler(CallbackQueryHandler(look_transcribe_callback, pattern='look_transcribe'))
         application.add_handler(MessageHandler(filters.AUDIO | filters.VOICE, audio_handler))
         application.add_handler(MessageHandler(filters.VIDEO | filters.VIDEO_NOTE, video_handler))
-        application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.prompt))
+        # application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.prompt))
         application.add_handler(InlineQueryHandler(self.inline_query, chat_types=[
             constants.ChatType.GROUP, constants.ChatType.SUPERGROUP, constants.ChatType.PRIVATE
         ]))
         application.add_handler(CallbackQueryHandler(self.handle_callback_inline_query))
 
         application.add_error_handler(error_handler)
-
+        add_handlers(application)
         application.run_polling()
