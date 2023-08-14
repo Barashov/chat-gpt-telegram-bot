@@ -753,12 +753,10 @@ class ChatGPTTelegramBot:
         application.add_handler(CommandHandler('reset', self.reset))
         application.add_handler(CommandHandler('help', self.help))
         application.add_handler(CommandHandler('image', self.image))
-        application.add_handler(CommandHandler('start', self.help))
+        # application.add_handler(CommandHandler('start', self.help))
         application.add_handler(CommandHandler('stats', self.stats))
         application.add_handler(CommandHandler('resend', self.resend))
-        application.add_handler(CommandHandler(
-            'chat', self.prompt, filters=filters.ChatType.GROUP | filters.ChatType.SUPERGROUP)
-        )
+
         application.add_handler(CallbackQueryHandler(callback_rate_dialog, pattern='rate_dialog_'))
         application.add_handler(CallbackQueryHandler(look_transcribe_callback, pattern='look_transcribe'))
         application.add_handler(MessageHandler(filters.AUDIO | filters.VOICE, audio_handler))

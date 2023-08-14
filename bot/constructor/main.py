@@ -2,7 +2,7 @@
 файл, в котором будет содаваться основная логика бота,
 """
 from telegram.ext import Application, MessageHandler, filters
-from .examples import conv
+from .examples import init_handlers
 
 
 def add_handlers(application: Application):
@@ -11,5 +11,4 @@ def add_handlers(application: Application):
     для текста, но захотелось сделать свой
     """
     # application.add_handler(MessageHandler(filters=filters.TEXT, callback=handler))
-    application.add_handler(conv.build())
-    print(conv.states)
+    init_handlers(application)

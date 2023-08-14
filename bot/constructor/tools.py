@@ -1,4 +1,9 @@
 from telegram.ext import ConversationHandler, MessageHandler, filters
+from telegram import Update, Message
+import openai
+import settings
+
+openai.api_key = settings.OPENAI_API_KEY
 
 
 class ConversationHandlerConstructor:
@@ -24,3 +29,14 @@ class ConversationHandlerConstructor:
         def wrapper(func):
             self.states[number] = [MessageHandler(filters=filters.ALL, callback=func)]
         return wrapper
+
+
+async def send_text(update: Update, text: str) -> Message:
+    return await update.effective_message.reply_markdown(text=text)
+
+
+async def prompt(text: str) -> str:
+    messages = [{'role': 'user',
+                 'content': text}]
+    response = await openai.ChatCompletion.acreate(messages=messages, model='gpt-3.5-turbo')
+    return response.choices[0]['message']['content']
