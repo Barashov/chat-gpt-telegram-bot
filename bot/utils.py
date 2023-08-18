@@ -399,3 +399,36 @@ async def stream_text(text,
             else:
                 message = await update.effective_message.reply_text(last_text)
     return message
+
+
+def is_subscribed_decorator(func):
+    async def wrapper(*args):
+        if len(args) == 3:
+            self = args[0]
+            update = args[1]
+            context = args[2]
+        else:
+            update = args[0]
+            context = args[1]
+        for channel in settings.CHANNELS:
+
+            result = await is_subscribed(update.effective_user.id,
+                                         channel,
+                                         context)
+            if not result:
+                await update.effective_message.reply_text(f'Подпишитесь на канал {channel}, чтобы пользоваться ботом')
+                return
+        result = await func(*args)
+        return result
+
+    return wrapper
+
+
+async def is_subscribed(user_id, chat_id, context: ContextTypes.DEFAULT_TYPE):
+
+    result = await context.bot.get_chat_member(chat_id, user_id)
+    status = result.status
+    if status == ChatMember.LEFT or\
+            status == ChatMember.BANNED or status == ChatMember.RESTRICTED:
+        return False
+    return True

@@ -1,11 +1,12 @@
 import os
 from telegram import Update
 from telegram.ext import ContextTypes
-from utils import transcribe, chop_audio, extract_audio_from_video, streaming_transcribe, get_file
+from utils import transcribe, chop_audio, extract_audio_from_video, streaming_transcribe, is_subscribed_decorator
 from pydub import AudioSegment
 from uuid import uuid4
 
 
+@is_subscribed_decorator
 async def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text('запрос отправлен')
     audio = update.message.audio
@@ -21,6 +22,7 @@ async def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await streaming_transcribe(audio, update)
 
 
+@is_subscribed_decorator
 async def video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text('запрос отправлен')
 
